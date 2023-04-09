@@ -257,15 +257,12 @@ graph_alpha_espe #Organizar luego
 OTU_francia<-otu_table(ASV_francia_final,taxa_are_rows = FALSE)
 OTU_florida<-otu_table(ASV_florida_final,taxa_are_rows = FALSE)
 
-
-francia_ps<-phyloseq(OTU_francia, taxa_francia)
-francia_ps
 taxa_florida2<-taxa_florida
 rownames(taxa_florida2)<-taxa_florida2$taxcnat
 taxa_florida2$taxcnat<-NULL
 taxa_florida2$seqs.ps<-NULL
-colnames(taxa_florida2)[1]<-"Domain"
-florida_ps<-phyloseq(OTU_florida,taxa_florida_ps)
+colnames(taxa_florida2)[1]<-"Kingdom"
+taxa_florida2<-taxa_florida2[,-7]
 taxa_florida_ps<-tax_table(as.matrix(taxa_florida2))
 
 meta_francia<-sample_data(metadatos_francia_finales)
@@ -273,26 +270,29 @@ meta_florida<-sample_data(metadatos_florida_finales)
 
 meta_florida<-meta_florida[,c(1,5)]
 meta_florida$Lugar<-c(rep("Florida",nrow(meta_florida)))
-colnames(meta_florida)<-c("Muestra","Especie","Lugar")
+colnames(meta_florida)<-c("Muestra","Especies","Lugar")
 meta_florida<-sample_data(meta_florida)
 
 meta_francia<-meta_francia[,7:8]
 meta_francia$Lugar<-c(rep("Francia",nrow(meta_francia)))
-colnames(meta_francia)<-c("Especie","Muestra","Lugar")
+colnames(meta_francia)<-c("Especies","Muestra","Lugar")
 meta_francia_1<-as.matrix(meta_francia)
 meta_francia_1<-as.data.frame(meta_francia_1)
-meta_francia_1<-meta_francia_1 %>%relocate(Especie,.after=Muestra)
+meta_francia_1<-meta_francia_1 %>%relocate(Especies,.after=Muestra)
 
 meta_francia<-sample_data(meta_francia_1)
 #Objetos phyloseq listos
 francia_ps<-phyloseq(OTU_francia, taxa_francia,meta_francia)
 florida_ps<-phyloseq(OTU_florida,taxa_florida_ps,meta_florida)
 francia_ps
+florida_ps
+florida_ps@tax_table$Species<-NULL
 
-# Ordenemos esa mierda
-
+rm(taxa_florida_ps,taxa_francia)
+# Hagamos un phyloseq con las dos cosas
 intento_merge<-merge_phyloseq(francia_ps,florida_ps)
 intento_merge
 View(intento_merge@sam_data)
-rm(intento_merge) #POR FIN DIO ESTA MIERDA
-
+View(intento_merge@tax_table)
+#POR FIN DIO ESTA MIERDA
+View(taxa_francia)
