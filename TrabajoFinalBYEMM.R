@@ -198,7 +198,7 @@ rm(ASV_presentes_florida_2,ASV_presentes_francia_2)
 rm(sumatoria_florida_2,sumatoria_francia_2)
 rm(asv_eliminar_florida_2)
 rm(asv_eliminar_francia_2)
-
+rm(miremos)
 
 #Quitar la última fila que son las sumas
 
@@ -251,4 +251,48 @@ graph_alpha_espe<-ggplot(data = metadatos_ambos,aes(x=Especies,y=Shannon))+
   geom_boxplot()
 graph_alpha_espe #Organizar luego
 #NO HAY DIFERENCIAS NI POR SITIO NI POR ESPECIE
+
+## BETA DIVERSIDAD 
+#Pasar todo a phyloseq
+OTU_francia<-otu_table(ASV_francia_final,taxa_are_rows = FALSE)
+OTU_florida<-otu_table(ASV_florida_final,taxa_are_rows = FALSE)
+
+
+francia_ps<-phyloseq(OTU_francia, taxa_francia)
+francia_ps
+taxa_florida2<-taxa_florida
+rownames(taxa_florida2)<-taxa_florida2$taxcnat
+taxa_florida2$taxcnat<-NULL
+taxa_florida2$seqs.ps<-NULL
+colnames(taxa_florida2)[1]<-"Domain"
+florida_ps<-phyloseq(OTU_florida,taxa_florida_ps)
+taxa_florida_ps<-tax_table(as.matrix(taxa_florida2))
+
+meta_francia<-sample_data(metadatos_francia_finales)
+meta_florida<-sample_data(metadatos_florida_finales)
+
+meta_florida<-meta_florida[,c(1,5)]
+meta_florida$Lugar<-c(rep("Florida",nrow(meta_florida)))
+colnames(meta_florida)<-c("Muestra","Especie","Lugar")
+meta_florida<-sample_data(meta_florida)
+
+meta_francia<-meta_francia[,7:8]
+meta_francia$Lugar<-c(rep("Francia",nrow(meta_francia)))
+colnames(meta_francia)<-c("Especie","Muestra","Lugar")
+meta_francia_1<-as.matrix(meta_francia)
+meta_francia_1<-as.data.frame(meta_francia_1)
+meta_francia_1<-meta_francia_1 %>%relocate(Especie,.after=Muestra)
+
+meta_francia<-sample_data(meta_francia_1)
+#Objetos phyloseq listos
+francia_ps<-phyloseq(OTU_francia, taxa_francia,meta_francia)
+florida_ps<-phyloseq(OTU_florida,taxa_florida_ps,meta_florida)
+francia_ps
+
+# Ordenemos esa mierda
+
+intento_merge<-merge_phyloseq(francia_ps,florida_ps)
+intento_merge
+View(intento_merge@sam_data)
+rm(intento_merge) #POR FIN DIO ESTA MIERDA
 
