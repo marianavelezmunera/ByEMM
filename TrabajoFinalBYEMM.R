@@ -2,7 +2,7 @@
 library(phyloseq)
 library(tidyverse)
 #Establecer directorio de trabajo
-setwd("C:/Users/Maria/OneDrive/Documents/Cosas de la maestría/PRIMER SEMESTRE/BIOGEOQUÍMICA Y ECOLOGÍA MICROBIANA MARINA/TRABAJO FINAL")
+setwd("C:/Users/Maria/OneDrive/Documents/Cosas de la maestría/PRIMER SEMESTRE/BIOGEOQUÍMICA Y ECOLOGÍA MICROBIANA MARINA/TRABAJO FINAL/ByEMM")
 
 ######################### DATOS CORALES FRANCIA ###########################
 
@@ -28,13 +28,11 @@ unique(metadatos_francia$Species_ID)
 ########################## Tabla ASV #####################################
 
 ASV_francia<-(ps_Chiarello_et_al2020@otu_table) #OTUs completos
-ASV_francia
 muestras_ASV_francia<-c(row.names(ASV_francia)) #nombres muestras 
 ASV_francia<-cbind(ASV_francia,muestras_ASV_francia) #Añadir una columna con el nombre de cada muestra a la tabla de ASV
 muestras_selec_francia<-c(metadatos_francia$muestra) #muestras que se van a usar
 ASV_francia<-subset(ASV_francia,muestras_ASV_francia%in%muestras_selec_francia)
 ASV_francia<-ASV_francia[,-43717] #quitamos la columna de muestras, tabla ASV final
-View(ASV_francia)
 ####### Remover ASV que no están presentes
 
 ASV_francia_1<-as.data.frame(ASV_francia) #Cambio formato
@@ -48,7 +46,6 @@ asv_eliminar_francia<-row.names(sumatoria_francia) #vector con las asv que vamos
 ASV_presentes_francia<-as.data.frame(ASV_presentes_francia)
 ASV_presentes_francia<-ASV_presentes_francia[,!names(ASV_presentes_francia) %in% c(asv_eliminar_francia)] #4867 ASV 
 ASV_francia<-ASV_presentes_francia
-View(sumatoria_francia)
 ASV_francia<-ASV_francia[-29,]
 rm(muestras_ASV_francia)
 rm(muestras_selec_francia)
@@ -64,7 +61,7 @@ taxa_francia<-(ps_Chiarello_et_al2020@tax_table)
 
 ############################### ASV FLORIDA ##############################
 
-ASV_florida_completo<-read.csv("~/Cosas de la maestría/PRIMER SEMESTRE/BIOGEOQUÍMICA Y ECOLOGÍA MICROBIANA MARINA/TRABAJO FINAL/florida/ASV_florida.csv") #todos los datos, 387 muestras
+ASV_florida_completo<-read.csv("~/Cosas de la maestría/PRIMER SEMESTRE/BIOGEOQUÍMICA Y ECOLOGÍA MICROBIANA MARINA/TRABAJO FINAL/ByEMM/florida/ASV_florida.csv") #todos los datos, 387 muestras
 ASV_florida_completo<-subset(ASV_florida_completo,Sample.Type=="Healthy"& Site.Type=="Healthy") #dejar solo los sitios e individuos saludables, 53 muestras
 ASV_florida_completo<-subset(ASV_florida_completo,Species!="Water") #quitar las muestras de agua, 44 muestras
 row.names(ASV_florida_completo)<-c(ASV_florida_completo$Sample.ID)
@@ -74,7 +71,6 @@ ASV_florida<-ASV_florida_completo[,-(c(1:5))] #dejamos solo las ASV
 ####### Remover ASV que no están presentes
 
 sumatoria_florida<-apply(ASV_florida,2,FUN = sum) #sumatoria abundancia ASV en todas las muestras
-View(sumatoria_florida)
 ASV_presentes_florida<-rbind(ASV_florida,sumatoria_florida) #juntar la suma como una última fila (16369 ASV)
 sumatoria_florida<-as.data.frame(sumatoria_florida) #cambio de formato
 sumatoria_florida<-subset(sumatoria_florida,sumatoria_florida==0) #dejar solo los que no están en ninguna muestra
@@ -106,4 +102,59 @@ rm(nombres_fil)
 
 ############################### TAXA FLORIDA ############################
 
-taxa_florida<-read.csv("~/Cosas de la maestría/PRIMER SEMESTRE/BIOGEOQUÍMICA Y ECOLOGÍA MICROBIANA MARINA/TRABAJO FINAL/florida/taxa_florida.csv") 
+taxa_florida <- read.csv("~/Cosas de la maestría/PRIMER SEMESTRE/BIOGEOQUÍMICA Y ECOLOGÍA MICROBIANA MARINA/TRABAJO FINAL/ByEMM/florida/taxa_florida.csv")
+
+##### SUBMUESTREO ESPECIES DE FRANCIA
+
+#SP1: Herpolitha_limax, SP2: Fungia_fungites
+
+acroporaa<-subset(metadatos_francia,Host_genus=="Acropora")
+sample(unique(acroporaa$Species_ID),3)
+
+#Especies Herpolitha_limax, Fungia_fungites, Acropora_intermedia, Acropora_cytherea y Acropora_elseyi
+
+### SUBMUESTREO DE LAS MUESTRAS DE FRANCIA 
+
+Acropora_intermedia<-subset(metadatos_francia,Species_ID=="Acropora_intermedia")
+sample(unique(Acropora_intermedia$muestra),2) #Muestras de A. intermedia: "F2-I-05-M" "F2-I-04-M"
+
+Acropora_cytherea<-subset(metadatos_francia,Species_ID=="Acropora_cytherea")
+sample(unique(Acropora_cytherea$muestra),2)#Muestras de A. cytherea: "F2-I-16-M" "F2-I-09-M"
+
+Acropora_elseyi<-subset(metadatos_francia,Species_ID=="Acropora_elseyi")
+sample(unique(Acropora_elseyi$muestra),2)#Muestras de A.elseyi: B2-I-07" "B2-I-09"
+
+muestras_francia<-c("F2-I-05-M","F2-I-04-M","F2-I-16-M","F2-I-09-M","B2-I-07","B2-I-09","	
+F1-I-13","F1-I-14","F1-I-09","F1-I-10")
+
+metadatos_francia_finales<-subset(metadatos_francia,muestra%in%muestras_francia)
+metadatos_francia_finales<-rbind(metadatos_francia_finales,subset(metadatos_francia,muestra=="F1-I-13")) #5 especies, 10 muestras, con estos se trabaja
+
+intento<-ASV_francia[c(muestras_francia),]
+miremos<-ASV_francia["F1-I-13",]
+intento<-rbind(intento,miremos)
+intento<-intento[-7,]
+ASV_francia_final<-intento
+rm(intento)
+
+##### SUBMUESTREO MUESTRAS DE FLORIDA
+
+Colpophyllia_natans<-subset(metadatos_florida,Especies=="Colpophyllia_natans")
+sample(unique(Colpophyllia_natans$Sample.ID),2) #Muestras de Colpophyllia_natans: "SWG500.H","SWG502.H"
+
+Orbicella_faveolata<-subset(metadatos_florida,Especies=="Orbicella_faveolata")
+sample(unique(Orbicella_faveolata$Sample.ID),2) #Muestras de Orbicella_faveolata: "SWG533.H", "SWG504.H"
+
+Montastraea_cavernosa<-subset(metadatos_florida,Especies=="Montastraea_cavernosa")
+sample(unique(Montastraea_cavernosa$Sample.ID),2) #Muestras de Montastraea_cavernosa: SWG508.H" "SWG506.H"
+
+Siderastrea_siderea<-subset(metadatos_florida,Especies=="Siderastrea_siderea")
+sample(unique(Siderastrea_siderea$Sample.ID),2) #Muestras de Siderastrea_siderea: "SWG510.H" "SWG509.H"
+
+Pseudodiploria_strigosa<-subset(metadatos_florida,Especies=="Pseudodiploria_strigosa")
+sample(unique(Pseudodiploria_strigosa$Sample.ID),2) #Muestras de Pseudodiploria_strigosa: "SWG514.H" "SWG527.H"
+
+muestras_florida<-c("SWG500.H","SWG502.H","SWG533.H","SWG504.H","SWG508.H","SWG506.H", "SWG510.H" ,"SWG509.H","SWG514.H","SWG527.H")
+
+metadatos_florida_finales<-subset(metadatos_florida,Sample.ID%in%muestras_florida)
+ASV_florida_final<-ASV_florida[c(muestras_florida),]
