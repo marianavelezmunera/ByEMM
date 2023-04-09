@@ -242,5 +242,13 @@ pv <- ks.test(spl$Francia, spl$Florida) #p value
 anova_especie<-aov(Shannon~Especies,data=metadatos_ambos)
 summary(anova_especie)
 
+
+graph_alpha_lugar<-ggplot(data = metadatos_ambos,aes(x=Lugar,y=Shannon))+
+  geom_boxplot()
+graph_alpha #Organizarla luego
+
+graph_alpha_espe<-ggplot(data = metadatos_ambos,aes(x=Especies,y=Shannon))+
+  geom_boxplot()
+graph_alpha_espe #Organizar luego
 #NO HAY DIFERENCIAS NI POR SITIO NI POR ESPECIE
 
