@@ -158,3 +158,37 @@ muestras_florida<-c("SWG500.H","SWG502.H","SWG533.H","SWG504.H","SWG508.H","SWG5
 
 metadatos_florida_finales<-subset(metadatos_florida,Sample.ID%in%muestras_florida)
 ASV_florida_final<-ASV_florida[c(muestras_florida),]
+
+#Borrar lo otro y solo dejar en el environment lo que sirve
+rm(Acropora_cytherea,Acropora_elseyi,Acropora_intermedia,acroporaa)
+rm(ASV_florida,ASV_francia)
+rm(Colpophyllia_natans,metadatos_florida)
+rm(metadatos_francia)
+rm(Montastraea_cavernosa,Orbicella_faveolata,Pseudodiploria_strigosa)
+rm(muestras_florida,muestras_francia)
+rm(ps_Chiarello_et_al2020)
+rm(Siderastrea_siderea)
+
+### ELIMINAR LAS ASV que no están en ninguna muestra (AGAIN)
+
+##Florida
+
+sumatoria_florida_2<-apply(ASV_florida_final,2,FUN = sum) #sumatoria abundancia ASV en todas las muestras
+ASV_presentes_florida_2<-rbind(ASV_florida_final,sumatoria_florida_2) #juntar la suma como una última fila (4643 ASV)
+sumatoria_florida_2<-as.data.frame(sumatoria_florida_2) #cambio de formato
+sumatoria_florida_2<-subset(sumatoria_florida_2,sumatoria_florida_2==0) #dejar solo los que no están en ninguna muestra
+asv_eliminar_florida_2<-row.names(sumatoria_florida_2) #cuales ASV se van a eliminar
+ASV_presentes_florida_2 <- ASV_presentes_florida_2[,!names(ASV_presentes_florida_2) %in% c(asv_eliminar_florida_2)] #Solo quedan las ASV que si están (2264)
+ASV_florida_final<-ASV_presentes_florida_2
+
+
+
+## Francia
+
+sumatoria_francia_2<-apply(ASV_francia_final,2,FUN = sum) #sumatoria abundancia ASV en todas las muestras
+ASV_presentes_francia_2<-rbind(ASV_francia_final,sumatoria_francia_2) #juntar la suma como una última fila (4643 ASV)
+sumatoria_francia_2<-as.data.frame(sumatoria_francia_2) #cambio de formato
+sumatoria_francia_2<-subset(sumatoria_francia_2,sumatoria_francia_2==0) #dejar solo los que no están en ninguna muestra
+asv_eliminar_francia_2<-row.names(sumatoria_francia_2) #cuales ASV se van a eliminar
+ASV_presentes_francia_2 <- ASV_presentes_francia_2[,!names(ASV_presentes_francia_2) %in% c(asv_eliminar_francia_2)] #Solo quedan las ASV que si están (2898)
+ASV_francia_final<-ASV_presentes_francia_2
