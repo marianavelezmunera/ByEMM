@@ -182,7 +182,6 @@ ASV_presentes_florida_2 <- ASV_presentes_florida_2[,!names(ASV_presentes_florida
 ASV_florida_final<-ASV_presentes_florida_2
 
 
-
 ## Francia
 
 sumatoria_francia_2<-apply(ASV_francia_final,2,FUN = sum) #sumatoria abundancia ASV en todas las muestras
@@ -192,3 +191,37 @@ sumatoria_francia_2<-subset(sumatoria_francia_2,sumatoria_francia_2==0) #dejar s
 asv_eliminar_francia_2<-row.names(sumatoria_francia_2) #cuales ASV se van a eliminar
 ASV_presentes_francia_2 <- ASV_presentes_francia_2[,!names(ASV_presentes_francia_2) %in% c(asv_eliminar_francia_2)] #Solo quedan las ASV que si están (2898)
 ASV_francia_final<-ASV_presentes_francia_2
+
+#Quitar del ENV lo que no voy a usar (AGAIN)
+
+rm(ASV_presentes_florida_2,ASV_presentes_francia_2)
+rm(sumatoria_florida_2,sumatoria_francia_2)
+rm(asv_eliminar_florida_2)
+rm(asv_eliminar_francia_2)
+
+
+#Quitar la última fila que son las sumas
+
+ASV_florida_final<-ASV_florida_final[-11,]
+ASV_francia_final<-ASV_francia_final[-11,]
+
+#### ANALISIS ALPHA DIVERSITY
+#florida
+
+florida_alpha <-microbiome::alpha(t(ASV_florida_final), index = "diversity_shannon")
+florida_rich<-richness(t(ASV_florida_final))
+metadatos_florida_finales$shannon<-florida_alpha
+colnames(metadatos_florida_finales[,6])<-"shannon"
+
+#francia
+
+francia_alpha <-microbiome::alpha(t(ASV_francia_final), index = "diversity_shannon")
+francia_rich<-richness(t(ASV_francia_final))
+metadatos_francia_finales$shannon<-francia_alpha
+colnames(metadatos_francia_finales[,9])<-"shannon"
+
+data(dietswap)
+pseq <- dietswap
+d<-meta(pseq)
+
+m
