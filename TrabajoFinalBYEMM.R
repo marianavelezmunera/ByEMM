@@ -1,6 +1,8 @@
 #Cargar paquetes
 library(phyloseq)
 library(tidyverse)
+library(microbiome)
+library(vegan)
 #Establecer directorio de trabajo
 setwd("C:/Users/Maria/OneDrive/Documents/Cosas de la maestría/PRIMER SEMESTRE/BIOGEOQUÍMICA Y ECOLOGÍA MICROBIANA MARINA/TRABAJO FINAL/ByEMM")
 
@@ -245,7 +247,7 @@ summary(anova_especie)
 
 graph_alpha_lugar<-ggplot(data = metadatos_ambos,aes(x=Lugar,y=Shannon))+
   geom_boxplot()
-graph_alpha #Organizarla luego
+graph_alpha_lugar #Organizarla luego
 
 graph_alpha_espe<-ggplot(data = metadatos_ambos,aes(x=Especies,y=Shannon))+
   geom_boxplot()
@@ -254,6 +256,7 @@ graph_alpha_espe #Organizar luego
 
 ## BETA DIVERSIDAD 
 #Pasar todo a phyloseq
+
 OTU_francia<-otu_table(ASV_francia_final,taxa_are_rows = FALSE)
 OTU_florida<-otu_table(ASV_florida_final,taxa_are_rows = FALSE)
 
@@ -261,8 +264,10 @@ taxa_florida2<-taxa_florida
 rownames(taxa_florida2)<-taxa_florida2$taxcnat
 taxa_florida2$taxcnat<-NULL
 taxa_florida2$seqs.ps<-NULL
+colnames(taxa_florida2)[1]
 colnames(taxa_florida2)[1]<-"Domain"
 taxa_florida2<-taxa_florida2[,-7]
+taxa_florida2<-as.matrix(taxa_florida2)
 taxa_florida_ps<-tax_table(as.matrix(taxa_florida2))
 
 meta_francia<-sample_data(metadatos_francia_finales)
@@ -284,10 +289,16 @@ meta_francia<-sample_data(meta_francia_1)
 #Objetos phyloseq listos
 francia_ps<-phyloseq(OTU_francia, taxa_francia,meta_francia)
 florida_ps<-phyloseq(OTU_florida,taxa_florida_ps,meta_florida)
-francia_ps
+View(francia_ps@tax_table)
+View(florida_ps@tax_table)
 florida_ps
-florida_ps@tax_table$Species<-NULL
 
+taxa_francia<-as.data.frame(taxa_francia)
+colnames(taxa_francia[1])
+colnames(taxa_francia)<-c("Domain","Phylum","Class","Order","Family","Genus")
+taxa_francia<-as.matrix(taxa_francia)
+taxa_francia<-tax_table(taxa_francia)
+View(taxa_florida)
 rm(taxa_florida_ps,taxa_francia)
 # Hagamos un phyloseq con las dos cosas
 intento_merge<-merge_phyloseq(francia_ps,florida_ps)
@@ -295,10 +306,12 @@ intento_merge
 View(intento_merge@sam_data)
 View(intento_merge@tax_table)
 #POR FIN DIO ESTA MIERDA
-View(taxa_francia)
+
 
 otus_juntas<-as.data.frame(intento_merge@otu_table)
 library(ade4)
+library(ape)
+
 matrixdist<-vegdist(otus_juntas,method="bray",na.rm = TRUE)
 matrixdist<-as.matrix(matrixdist)
 
@@ -383,3 +396,67 @@ p1 <- plot_core(core.fam,
   xlab("Detection Threshold (Relative Abundance (%))")
 p1 <- p1 + theme_bw() + ylab("ASVs")
 print(p1)
+
+#### Diagrama de Venn por lugar
+
+table(meta(phyloseq_completo)$Lugar, useNA = "always")
+phyloseq_completo@sam_data
+lugares_lista<-unique(as.character(meta(core)$Lugar))
+print(lugares_lista)
+list_core <- c()
+for (n in lugares_lista){
+  ps.sub <- subset_samples(core, Lugar == n)
+  core_m <- core_members(ps.sub, 
+                         detection = 0.001, 
+                         prevalence = 0.5)
+  print(paste0("No. of core taxa in ", n, " : ", length(core_m)))
+  list_core[[n]] <- core_m
+}
+mycols <- c(Francia="#d6e2e9", Florida="#cbf3f0") 
+plot(venn(list_core),
+     fills = mycols)
+
+#Venn por SPP
+
+table(meta(phyloseq_completo)$Especies, useNA = "always")
+phyloseq_completo@sam_data
+especies_lista<-unique(as.character(meta(core)$Especies))
+print(especies_lista)
+list_core1 <- c()
+for (n in especies_lista){
+  ps.sub <- subset_samples(core, Especies == n)
+  core_m <- core_members(ps.sub, 
+                         detection = 0.001, 
+                         prevalence = 0.5)
+  print(paste0("No. of core taxa in ", n, " : ", length(core_m)))
+  list_core1[[n]] <- core_m
+}
+
+#### Algunas graficas
+
+#Abundancias 
+
+plot_abundance = function(physeq, ylabn = "",
+                          Facet = "Phylum",
+                          Color = "Phylum",filos){
+  mphyseq = psmelt(physeq)
+  mphyseq <- subset(mphyseq, Abundance > 0)
+  mphyseq <- subset(mphyseq,Phylum%in%filos)
+  ggplot(data = mphyseq,
+         mapping = aes_string(x = "Lugar", y = "Abundance",
+                              color = Color, fill = Color)) +
+    geom_violin(fill = NA) +
+    geom_point(size = 1, alpha = 0.3,
+               position = position_jitter(width = 0.3)) +
+    facet_wrap(facets = Facet) + ylab(ylabn) +
+    scale_y_log10()+
+    theme(legend.position = "none")
+}
+filos<-c("Acidobacteria","Actinobacteria","Bacteroidetes","Calditrichaeota","Chlamydiae","Chlroflexi","Cyanobacteria","Dadabacteria","Deinococcus-Thermus","Epsilonbacteraeota","Euryarchaeota","Firmicutes","Fusobacteria","Gemmatimonadetes","Kiritimatiellaeota","Marinimicrobia_(SAR406_clade)","Nanoarchaeaeota","Nitrospirae","Patescibacteria","Planctomycetes","Proteobacteria","Tenericutes","Spirochaetes","Thaumarchaeota","Verrucomicrobia")
+plot_abundance(phyloseq_completo,"Abundancias",filos=filos)
+
+## ANOSIM
+
+ANOSIM<-anosim(matrixdist, metadatos_ambos$Lugar, distance="bray",permutations=9999)
+ANOSIM
+
