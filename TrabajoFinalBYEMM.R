@@ -261,7 +261,7 @@ taxa_florida2<-taxa_florida
 rownames(taxa_florida2)<-taxa_florida2$taxcnat
 taxa_florida2$taxcnat<-NULL
 taxa_florida2$seqs.ps<-NULL
-colnames(taxa_florida2)[1]<-"Kingdom"
+colnames(taxa_florida2)[1]<-"Domain"
 taxa_florida2<-taxa_florida2[,-7]
 taxa_florida_ps<-tax_table(as.matrix(taxa_florida2))
 
@@ -296,3 +296,60 @@ View(intento_merge@sam_data)
 View(intento_merge@tax_table)
 #POR FIN DIO ESTA MIERDA
 View(taxa_francia)
+
+otus_juntas<-as.data.frame(intento_merge@otu_table)
+library(ade4)
+matrixdist<-vegdist(otus_juntas,method="bray",na.rm = TRUE)
+matrixdist<-as.matrix(matrixdist)
+
+PCoA<-pcoa(matrixdist, correction="none", rn=NULL)
+biplot(PCoA) #BetaDiversidad
+
+
+### CORE MICROBIOME 
+
+core <- microbiome::transform(intento_merge, "compositional")
+taxa_names(core)[1:2]
+
+core.taxa.standard <- core_members(core, detection = 0.0001, prevalence = 50/100)
+core.taxa.standard #Este es el core (57 taxa)
+
+tax_table(core)[tax_table(core) == "k__"] <- NA
+tax_table(core)[tax_table(core) == "p__"] <- NA
+tax_table(core)[tax_table(core) == "c__"] <- NA
+tax_table(core)[tax_table(core) == "o__"] <- NA
+tax_table(core)[tax_table(core) == "f__"] <- NA
+tax_table(core)[tax_table(core) == "g__"] <- NA
+tax_table(core)[tax_table(core) == "s__"] <- NA
+
+tax_table(core)[, colnames(tax_table(core))] <- gsub(tax_table(core)[, colnames(tax_table(core))],  pattern = "[a-z]__", replacement = "")
+
+core.f <- microbiome::add_besthit(core)
+
+taxa_names(core.f)[1:10] 
+
+miremos<-as.data.frame(core@tax_table)
+colnames(miremos)[1]<-"Domain"
+
+miremos<-as.matrix(miremos)
+miremos<-tax_table(miremos)
+
+core<-phyloseq(core@otu_table,miremos,core@sam_data)
+
+
+core.taxa.standard <- core_members(core.f, detection = 0.0001, prevalence = 50/100)
+core.taxa.standard
+
+core.core <- core(core.f, detection = 0.0001, prevalence = .5)
+core.taxa <- taxa(core.core)
+
+tax.mat <- tax_table(core.core)
+tax.df <- as.data.frame(tax.mat)
+
+# add the OTus to last column
+tax.df$OTU <- rownames(tax.df)
+
+# select taxonomy of only 
+# those OTUs that are core memebers based on the thresholds that were used.
+core.taxa.class <- dplyr::filter(tax.df, rownames(tax.df) %in% core.taxa)
+View((head(core.taxa.class))) #TABLA CON EL CORE MICROBIOME
