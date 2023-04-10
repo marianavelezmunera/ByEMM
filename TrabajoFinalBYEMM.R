@@ -307,8 +307,17 @@ biplot(PCoA) #BetaDiversidad
 
 
 ### CORE MICROBIOME 
+core<-as.data.frame(intento_merge@tax_table)
+colnames(core)[1]<-"Domain"
+View(core)
+core<-as.matrix(core)
+core<-tax_table(core)
+intento_merge2<-phyloseq(intento_merge@otu_table,core,intento_merge@sam_data)
+intento_merge2
+intento_merge
+phyloseq_completo<-intento_merge2
 
-core <- microbiome::transform(intento_merge, "compositional")
+core <- microbiome::transform(phyloseq_completo, "compositional")
 taxa_names(core)[1:2]
 
 core.taxa.standard <- core_members(core, detection = 0.0001, prevalence = 50/100)
@@ -328,15 +337,6 @@ core.f <- microbiome::add_besthit(core)
 
 taxa_names(core.f)[1:10] 
 
-miremos<-as.data.frame(core@tax_table)
-colnames(miremos)[1]<-"Domain"
-
-miremos<-as.matrix(miremos)
-miremos<-tax_table(miremos)
-
-core<-phyloseq(core@otu_table,miremos,core@sam_data)
-
-
 core.taxa.standard <- core_members(core.f, detection = 0.0001, prevalence = 50/100)
 core.taxa.standard
 
@@ -353,3 +353,33 @@ tax.df$OTU <- rownames(tax.df)
 # those OTUs that are core memebers based on the thresholds that were used.
 core.taxa.class <- dplyr::filter(tax.df, rownames(tax.df) %in% core.taxa)
 View((head(core.taxa.class))) #TABLA CON EL CORE MICROBIOME
+
+#Heatmap de Familias
+
+#Con todo porque qué gonorrea
+
+
+prevalences <- seq(.05, 1, .05)
+detections <- round(10^seq(log10(1e-5), log10(.2), length = 10), 3)
+
+p <- plot_core(core.f, plot.type = "heatmap", 
+               min.prevalence = 0.6, 
+               prevalences = prevalences, 
+               detections = detections) +
+  xlab("Detection Threshold (Relative Abundance (%))")
+print(p)
+
+### SOLO A NIVEL DE filo
+
+core.fam <- aggregate_taxa(core, "Phylum")
+any(taxa_names(core.fam) == "Unknown")
+core.fam <- subset_taxa(core.fam, Phylum!="Unknown")
+core.fam <- microbiome::transform(core.fam, "compositional")
+
+p1 <- plot_core(core.fam, 
+                plot.type = "heatmap", 
+                prevalences = prevalences, 
+                detections = detections, min.prevalence = .5) +
+  xlab("Detection Threshold (Relative Abundance (%))")
+p1 <- p1 + theme_bw() + ylab("ASVs")
+print(p1)
